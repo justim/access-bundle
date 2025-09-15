@@ -13,7 +13,13 @@ declare(strict_types=1);
 
 namespace Access\AccessBundle;
 
+use Access\AccessBundle\Migrations\Command\InitCommand;
+use Access\AccessBundle\Migrations\Command\RedoCommand;
+use Access\AccessBundle\Migrations\Command\RevertCommand;
+use Access\AccessBundle\Migrations\Command\RunAllCommand;
+use Access\AccessBundle\Migrations\Command\RunCommand;
 use Access\Database;
+use Access\Migrations\MigrationEntity;
 use Override;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Clock\ClockInterface;
@@ -82,6 +88,19 @@ final class AccessBundle extends AbstractBundle
                         ->end()
                     ->end()
                 ->end() // profiler
+                ->arrayNode('migrations')
+                    ->info('Database migration settings')
+                    ->children()
+                        ->scalarNode('migration_entity_class')
+                        ->defaultValue(MigrationEntity::class)
+                    ->end()
+                    ->scalarNode('migrations_namespace')
+                        ->defaultValue('App\\Migrations')
+                    ->end()
+                    ->scalarNode('migrations_path')
+                        ->defaultValue('%kernel.project_dir%/migrations')
+                    ->end()
+                ->end()
             ->end()
         ;
     }
@@ -124,5 +143,55 @@ final class AccessBundle extends AbstractBundle
                 $profilerMode,
             ])
             ->public();
+
+        $container
+            ->parameters()
+            ->set(
+                'access.migrations.migrations_namespace',
+                $config['migrations']['migrations_namespace'] ?? 'App\\Migrations',
+            )
+            ->set(
+                'access.migrations.migrations_path',
+                $config['migrations']['migrations_path'] ?? '%kernel.project_dir%/migrations',
+            )
+            ->set(
+                'access.migrations.migration_entity_class',
+                $config['migrations']['migration_entity_class'] ?? MigrationEntity::class,
+            );
+
+        $container
+            ->services()
+            ->set('access.migrations.init_command', InitCommand::class)
+            ->args([service(Database::class), param('access.migrations.migration_entity_class')])
+            ->tag('console.command');
+
+        $container
+            ->services()
+            ->set('access.migrations.run_command', RunCommand::class)
+            ->args([service(Database::class), param('access.migrations.migration_entity_class')])
+            ->tag('console.command');
+
+        $container
+            ->services()
+            ->set('access.migrations.run_all_command', RunAllCommand::class)
+            ->args([
+                service(Database::class),
+                param('access.migrations.migrations_namespace'),
+                param('access.migrations.migrations_path'),
+                param('access.migrations.migration_entity_class'),
+            ])
+            ->tag('console.command');
+
+        $container
+            ->services()
+            ->set('access.migrations.revert_command', RevertCommand::class)
+            ->args([service(Database::class), param('access.migrations.migration_entity_class')])
+            ->tag('console.command');
+
+        $container
+            ->services()
+            ->set('access.migrations.redo_command', RedoCommand::class)
+            ->args([service(Database::class), param('access.migrations.migration_entity_class')])
+            ->tag('console.command');
     }
 }
