@@ -1,0 +1,136 @@
+{% extends '@WebProfiler/Profiler/layout.html.twig' %}
+
+{% block menu %}
+    {# This left-hand menu appears when using the full-screen profiler. #}
+    <span class="label{{ collector.queries|length == 0 ? ' disabled' }}">
+        <!-- old doctrine icon -->
+        <span class="icon"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAcCAYAAAB/E6/TAAABLUlEQVR42u3TP0vDQBiA8UK/gDiLzi0IhU4OEunk5OQUAhGSOBUCzqWfIKSzX8DRySF0URCcMjWLIJjFD9Cpk/D6HITecEPUuzhIAz8CIdyTP/f2iqI4qaqqDx8l5Ic2uIeP/bquezCokOAFF+oCN3t4gPzSEjc4NEPaCldQbzjELTYW0RJzHDchwwem+ons6ZBpLSJ7nueJC22h0V+FzmwWV0ee59vQNV67CGVZJmEYbkNjfpY6X6I0Qo4/3RMmTdDDspuQVsJvgkP3IdMbIkIjLPBoadG2646iKJI0Ta2wxm6OdnP0/Tk6DYJgHcfxpw21RtscDTDDnaVZ26474GkkSRIrrPEv5sgMTfHe+cA2O6wPH6vOBpYQNALneHb96XTEDI6dzpEZ0VzO0Rf3pP5LMLI4tAAAAABJRU5ErkJggg==" alt="" /></span>
+        <strong>Access</strong>
+
+        <span class="count">
+            <span>{{ collector.queries|length }}</span>
+        </span>
+    </span>
+{% endblock %}
+
+{% block panel %}
+    {% set limit_originals = 200 %}
+    {% set limit_formatted = 300 %}
+
+    {# Optional, for showing the most details. #}
+    <h2>Query metrics</h2>
+
+    <div class="metrics">
+        <div class="metric">
+            <span class="value">{{ collector.queries|length }}</span>
+            <span class="label">Database Queries</span>
+        </div>
+
+        <div class="metric">
+            <span class="value">{{ '%0.2f'|format(collector.duration * 1000) }} ms</span>
+            <span class="label">Query time</span>
+        </div>
+
+        <div class="metric">
+            <span class="value">{{ '%0.2f'|format(collector.durationWithHydrate * 1000) }} ms</span>
+            <span class="label">Query time w/ hydrate</span>
+        </div>
+    </div>
+
+    <p>
+        <em>Note: The hydration duration might be a bit skewed due to the use of generators, records are streamed</em>
+
+        {% if collector.queries|length > limit_originals %}
+            <br><em>Note: There are a lot of queries, original and formatted queries are disabled to keep the page responsive</em>
+        {% endif %}
+
+        {% if collector.queries|length > limit_formatted %}
+            <br><em>Note: There are a lot of queries, formatting has been disabled to keep page responsive</em>
+        {% endif %}
+    </p>
+
+    <h2>Queries</h2>
+
+    <style>
+        {% if profiler_markup_version >= 3 %}
+        .highlight .keyword   { color: var(--highlight-keyword); font-weight: bold; }
+        .highlight .word      { color: var(--color-text); }
+        .highlight .variable  { color: var(--highlight-variable); }
+        .highlight .symbol    { color: var(--color-text); }
+        .highlight .comment   { color: var(--highlight-comment); }
+        .highlight .string    { color: var(--highlight-string); }
+        .highlight .number    { color: var(--highlight-constant); font-weight: bold; }
+        .highlight .error     { color: var(--highlight-error); }
+        {% endif %}
+    </style>
+
+    {% if collector.queries is empty %}
+        <div class="empty">
+            <p>No database queries were performed.</p>
+        </div>
+    {% else %}
+        <table class="alt queries-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Time</th>
+                    <th>Time w/ hydrate</th>
+                    <th>Results</th>
+                    <th>Query</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for i, query in collector.queries %}
+                    <tr>
+                        <td>{{ i + 1 }}</td>
+                        <td class="nowrap">{{ '%0.2f'|format(query.duration * 1000) }} ms</td>
+                        <td class="nowrap">{{ '%0.2f'|format(query.durationWithHydrate * 1000) }} ms</td>
+                        <td class="nowrap">{{ query.numberOfResults|number_format }}</td>
+                        {% if query.runnableSql %}
+                            <td>
+                                {% if collector.queries|length > limit_formatted %}
+                                    {{ query.runnableSql }}
+                                {% else %}
+                                    {{ query.runnableSql|access_prettify_sql() }}
+                                {% endif %}
+
+                                {% if collector.queries|length <= limit_originals %}
+                                    <div>
+                                    <strong class="font-normal text-small">Parameters</strong>: {{ profiler_dump(query.values, 0) }}
+                                    </div>
+                                    <div class="font-normal">
+                                    <a href="#" class="access-toggle-original">Toggle original (parameterized) query</a> /
+                                    <a href="#" class="access-toggle-formatted">Toggle formatted query</a>
+                                    <div class="access-original sql-runnable" style="display: none;">
+                                        <strong>Original (parameterized) query</strong>
+                                        {{ query.sql|access_prettify_sql() }}
+                                    </div>
+                                    <div class="access-formatted sql-runnable" style="display: none;">
+                                        <strong>Formatted query</strong>
+                                        {{ query.runnableSql|access_format_sql() }}
+                                    </div>
+                                    </div>
+                                {% endif %}
+                            </td>
+                        {% else %}
+                            <td>Dropped query (most likely an `INSERT`/`UPDATE` query without values)</td>
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <script>
+        document.body.addEventListener('click', ev => {
+            if (ev.target.className === 'access-toggle-original' || ev.target.className === 'access-toggle-formatted') {
+                ev.preventDefault();
+                ev.stopPropagation();
+
+                const originalSql = ev.target.nextElementSibling.nextElementSibling;
+                const currentDisplay = originalSql.style.display;
+                originalSql.style.display = currentDisplay === 'none' ? 'block' : 'none';
+            }
+        });
+        </script>
+    {% endif %}
+{% endblock %}

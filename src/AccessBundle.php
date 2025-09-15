@@ -13,11 +13,13 @@ declare(strict_types=1);
 
 namespace Access\AccessBundle;
 
+use Access\AccessBundle\DataCollector\AccessDataCollector;
 use Access\AccessBundle\Migrations\Command\InitCommand;
 use Access\AccessBundle\Migrations\Command\RedoCommand;
 use Access\AccessBundle\Migrations\Command\RevertCommand;
 use Access\AccessBundle\Migrations\Command\RunAllCommand;
 use Access\AccessBundle\Migrations\Command\RunCommand;
+use Access\AccessBundle\Twig\AccessExtension;
 use Access\Database;
 use Access\Migrations\MigrationEntity;
 use Override;
@@ -143,6 +145,20 @@ final class AccessBundle extends AbstractBundle
                 $profilerMode,
             ])
             ->public();
+
+        $container
+            ->services()
+            ->set('access.access_data_collector', AccessDataCollector::class)
+            ->args([service(Database::class)])
+            ->tag('data_collector', [
+                'template' => '@Access/access-data-collector.html.twig',
+                'id' => 'access',
+            ]);
+
+        $container
+            ->services()
+            ->set('access.twig_extension', AccessExtension::class)
+            ->tag('twig.extension');
 
         $container
             ->parameters()
