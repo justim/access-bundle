@@ -1,0 +1,41 @@
+{
+    "name": "justim/access-bundle",
+    "version": "1.0.0",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "require": {
+        "php": "^8.4",
+        "doctrine/sql-formatter": "^1.5",
+        "justim/access": "dev-schema-what",
+        "monolog/monolog": "^1.25.1 || ^2.0 || ^3.0",
+        "psr/log": "^3.0",
+        "symfony/clock": "^7.3",
+        "symfony/config": "^7.3",
+        "symfony/console": "^7.3",
+        "symfony/dependency-injection": "^7.3",
+        "symfony/filesystem": "^7.3",
+        "symfony/http-kernel": "^7.3",
+        "symfony/stopwatch": "^7.3",
+        "twig/twig": "^3.21"
+    },
+    "require-dev": {
+        "symfony/web-profiler-bundle": "^7.3",
+        "vimeo/psalm": "^6.13"
+    },
+    "autoload": {
+        "psr-4": {
+            "Access\\AccessBundle\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Tim",
+            "email": "me@justim.net"
+        }
+    ],
+    "config": {
+        "sort-packages": true
+    },
+    "prefer-stable": true,
+    "minimum-stability": "stable"
+}
