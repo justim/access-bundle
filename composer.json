@@ -27,6 +27,9 @@
             "Access\\AccessBundle\\": "src/"
         }
     },
+    "scripts": {
+        "lint": "psalm --show-info=false"
+    },
     "authors": [
         {
             "name": "Tim",
