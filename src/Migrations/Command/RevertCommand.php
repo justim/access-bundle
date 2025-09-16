@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Access\AccessBundle\Migrations\Command;
 
 use Access\Database;
+use Access\Migrations\Checkpoint;
 use Access\Migrations\Exception\MigrationFailedException;
 use Access\Migrations\Migration;
 use Access\Migrations\Migrator;
@@ -41,6 +42,7 @@ final class RevertCommand
         #[Argument(description: 'Version to revert')] string $version,
         #[Option] bool $dryRun = false,
         #[Option(description: 'Revert destructive part of migration')] bool $destructive = false,
+        #[Option(description: 'Start reverting migration from checkpoint')] int $checkpoint = 0,
     ): int {
         $io = new SymfonyStyle($input, $output);
 
@@ -55,6 +57,14 @@ final class RevertCommand
 
         $io->section(sprintf('Reverting migration %s', $version));
 
+        $initialCheckpoint = new Checkpoint($checkpoint);
+
+        if ($initialCheckpoint->getStep() > 0) {
+            $io->note(
+                sprintf('Resuming reverting from checkpoint %d', $initialCheckpoint->getStep()),
+            );
+        }
+
         /** @psalm-suppress UnsafeInstantiation */
         $migration = new $version();
 
@@ -62,15 +72,15 @@ final class RevertCommand
 
         try {
             if ($destructive) {
-                $result = $migrator->revertDestructive($migration);
+                $result = $migrator->revertDestructive($migration, $initialCheckpoint);
             } else {
-                $result = $migrator->revertConstructive($migration);
+                $result = $migrator->revertConstructive($migration, $initialCheckpoint);
             }
 
             if ($result->isSuccess()) {
                 $changes = $result->getChanges();
                 assert($changes instanceof SchemaChanges);
-                $formatter->showQueries($changes);
+                $formatter->showQueries($changes, $initialCheckpoint);
 
                 if ($dryRun) {
                     $io->note('Dry run mode - no changes were applied to the database');
@@ -83,9 +93,9 @@ final class RevertCommand
                     $migrator->setDryRun(false);
 
                     if ($destructive) {
-                        $migrator->revertDestructive($migration);
+                        $migrator->revertDestructive($migration, $initialCheckpoint);
                     } else {
-                        $migrator->revertConstructive($migration);
+                        $migrator->revertConstructive($migration, $initialCheckpoint);
                     }
 
                     // no need to check result again, if it fails an exception will be thrown
@@ -99,9 +109,15 @@ final class RevertCommand
                 return Command::FAILURE;
             }
         } catch (MigrationFailedException $e) {
-            $changes = $e->getChanges();
-            assert($changes instanceof SchemaChanges);
-            $formatter->showQueries($changes);
+            $checkpoint = $e->getCheckpoint();
+
+            $io->info(
+                sprintf(
+                    'Reverting migration failed at checkpoint %d, pass the checkpoint with `--checkpoint=%1$d` to continue',
+                    $checkpoint->getStep(),
+                ),
+            );
+
             throw $e;
         }
 

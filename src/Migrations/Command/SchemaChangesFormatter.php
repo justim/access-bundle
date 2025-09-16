@@ -15,6 +15,7 @@ namespace Access\AccessBundle\Migrations\Command;
 
 use Access\Database;
 use Access\DebugQuery;
+use Access\Migrations\Checkpoint;
 use Access\Migrations\SchemaChanges;
 use Doctrine\SqlFormatter\CliHighlighter;
 use Doctrine\SqlFormatter\SqlFormatter;
@@ -29,9 +30,11 @@ final class SchemaChangesFormatter
         $this->sqlFormatter = new SqlFormatter(new CliHighlighter());
     }
 
-    public function showQueries(SchemaChanges $changes): void
-    {
-        foreach ($changes->getQueries() as $query) {
+    public function showQueries(
+        SchemaChanges $changes,
+        Checkpoint $checkpoint = new Checkpoint(),
+    ): void {
+        foreach ($changes->getQueries($checkpoint) as $query) {
             $debugQuery = new DebugQuery($query);
             $debugQuery = $debugQuery->toRunnableQuery($this->db->getDriver());
 

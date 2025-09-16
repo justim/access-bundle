@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Access\AccessBundle\Migrations\Command;
 
 use Access\Database;
+use Access\Migrations\Checkpoint;
 use Access\Migrations\Exception\MigrationFailedException;
 use Access\Migrations\Migration;
 use Access\Migrations\MigrationEntity;
@@ -41,6 +42,7 @@ final class RunCommand
         #[Argument(description: 'Version to migrate to')] string $version,
         #[Option] bool $dryRun = false,
         #[Option(description: 'Exectute destructive part of migration')] bool $destructive = false,
+        #[Option(description: 'Start migration from checkpoint')] int $checkpoint = 0,
     ): int {
         $io = new SymfonyStyle($input, $output);
 
@@ -55,6 +57,12 @@ final class RunCommand
 
         $io->section(sprintf('Running migration %s', $version));
 
+        $initialCheckpoint = new Checkpoint($checkpoint);
+
+        if ($initialCheckpoint->getStep() > 0) {
+            $io->note(sprintf('Resuming from checkpoint %d', $initialCheckpoint->getStep()));
+        }
+
         /** @psalm-suppress UnsafeInstantiation */
         $migration = new $version();
 
@@ -62,15 +70,15 @@ final class RunCommand
 
         try {
             if ($destructive) {
-                $result = $migrator->destructive($migration);
+                $result = $migrator->destructive($migration, $initialCheckpoint);
             } else {
-                $result = $migrator->constructive($migration);
+                $result = $migrator->constructive($migration, $initialCheckpoint);
             }
 
             if ($result->isSuccess()) {
                 $changes = $result->getChanges();
                 assert($changes instanceof SchemaChanges);
-                $formatter->showQueries($changes);
+                $formatter->showQueries($changes, $initialCheckpoint);
 
                 if ($dryRun) {
                     $io->note('Dry run mode - no changes were applied to the database');
@@ -83,9 +91,9 @@ final class RunCommand
                     $migrator->setDryRun(false);
 
                     if ($destructive) {
-                        $migrator->destructive($migration);
+                        $migrator->destructive($migration, $initialCheckpoint);
                     } else {
-                        $migrator->constructive($migration);
+                        $migrator->constructive($migration, $initialCheckpoint);
                     }
 
                     // no need to check result again, if it fails an exception will be thrown
@@ -99,9 +107,15 @@ final class RunCommand
                 return Command::FAILURE;
             }
         } catch (MigrationFailedException $e) {
-            $changes = $e->getChanges();
-            assert($changes instanceof SchemaChanges);
-            $formatter->showQueries($changes);
+            $checkpoint = $e->getCheckpoint();
+
+            $io->info(
+                sprintf(
+                    'Migration failed at checkpoint %d, pass the checkpoint with `--checkpoint=%1$d` to continue',
+                    $checkpoint->getStep(),
+                ),
+            );
+
             throw $e;
         }
 
