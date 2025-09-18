@@ -43,7 +43,7 @@ class AccessDatabase extends Database implements ResetInterface
         private int $port,
         private string $databaseName,
         private string $username,
-        #[SensitiveParameter] private string $password,
+        #[SensitiveParameter] private ?string $password,
         Stopwatch $stopwatch,
         private LoggerInterface $logger,
         ClockInterface $clock,
