@@ -25,6 +25,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Filesystem\Path;
 
@@ -40,6 +41,7 @@ final class RunAllCommand
      * @param class-string<MigrationEntity> $migrationEntity
      */
     public function __construct(
+        private ContainerInterface $container,
         private Database $db,
         private string $migrationsNamespace,
         private string $migrationsPath,
@@ -108,15 +110,15 @@ final class RunAllCommand
             return Command::SUCCESS;
         }
 
-        usort($migrations, fn($a, $b) => strcmp($a, $b));
+        usort($migrations, fn(string $a, string $b) => strcmp($a, $b));
 
         $formatter = new SchemaChangesFormatter($this->db, $io);
 
         foreach ($migrations as $version) {
             $io->section(sprintf('Running migration %s', $version));
 
-            /** @psalm-suppress UnsafeInstantiation */
-            $migration = new $version();
+            /** @var Migration $migration */
+            $migration = $this->container->get($version);
 
             try {
                 $result = $migrator->constructive($migration);

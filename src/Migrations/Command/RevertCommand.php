@@ -27,6 +27,7 @@ use Access\Migrations\MigrationEntity;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 #[AsCommand(name: 'access:migrations:revert')]
 final class RevertCommand
@@ -34,7 +35,11 @@ final class RevertCommand
     /**
      * @param class-string<MigrationEntity> $migrationEntity
      */
-    public function __construct(private Database $db, private string $migrationEntity) {}
+    public function __construct(
+        private ContainerInterface $container,
+        private Database $db,
+        private string $migrationEntity,
+    ) {}
 
     public function __invoke(
         InputInterface $input,
@@ -65,8 +70,8 @@ final class RevertCommand
             );
         }
 
-        /** @psalm-suppress UnsafeInstantiation */
-        $migration = new $version();
+        /** @var Migration $migration */
+        $migration = $this->container->get($version);
 
         $formatter = new SchemaChangesFormatter($this->db, $io);
 

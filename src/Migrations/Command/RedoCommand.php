@@ -21,6 +21,7 @@ use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 #[AsCommand(name: 'access:migrations:redo')]
 final class RedoCommand
@@ -28,7 +29,11 @@ final class RedoCommand
     /**
      * @param class-string<MigrationEntity> $migrationEntity
      */
-    public function __construct(private Database $db, private string $migrationEntity) {}
+    public function __construct(
+        private ContainerInterface $container,
+        private Database $db,
+        private string $migrationEntity,
+    ) {}
 
     public function __invoke(
         InputInterface $input,
@@ -37,14 +42,14 @@ final class RedoCommand
         #[Option] bool $dryRun = false,
         #[Option(description: 'Exectute destructive part of migration')] bool $destructive = false,
     ): int {
-        $revert = new RevertCommand($this->db, $this->migrationEntity);
+        $revert = new RevertCommand($this->container, $this->db, $this->migrationEntity);
         $code = $revert($input, $output, $version, $dryRun, $destructive);
 
         if ($code !== Command::SUCCESS) {
             return $code;
         }
 
-        $run = new RunCommand($this->db, $this->migrationEntity);
+        $run = new RunCommand($this->container, $this->db, $this->migrationEntity);
         return $run($input, $output, $version, $dryRun, $destructive);
     }
 }

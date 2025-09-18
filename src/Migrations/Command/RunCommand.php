@@ -27,6 +27,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 #[AsCommand(name: 'access:migrations:run')]
 final class RunCommand
@@ -34,7 +35,11 @@ final class RunCommand
     /**
      * @param class-string<MigrationEntity> $migrationEntity
      */
-    public function __construct(private Database $db, private string $migrationEntity) {}
+    public function __construct(
+        private ContainerInterface $container,
+        private Database $db,
+        private string $migrationEntity,
+    ) {}
 
     public function __invoke(
         InputInterface $input,
@@ -63,8 +68,8 @@ final class RunCommand
             $io->note(sprintf('Resuming from checkpoint %d', $initialCheckpoint->getStep()));
         }
 
-        /** @psalm-suppress UnsafeInstantiation */
-        $migration = new $version();
+        /** @var Migration $migration */
+        $migration = $this->container->get($version);
 
         $formatter = new SchemaChangesFormatter($this->db, $io);
 
