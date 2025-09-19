@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Access\AccessBundle\DependencyInjection\Compiler;
 
 use Override;
+use Symfony\Component\Config\Resource\DirectoryResource;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Finder\Finder;
@@ -38,6 +39,8 @@ final class AutowireMigrationsPass implements CompilerPassInterface
         if (!is_dir($path)) {
             return;
         }
+
+        $container->addResource(new DirectoryResource($path));
 
         $finder = new Finder();
         $finder->files()->in($path)->name('*.php');
