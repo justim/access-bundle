@@ -120,6 +120,12 @@ final class RunAllCommand
             /** @var Migration $migration */
             $migration = $this->container->get($version);
 
+            $description = $migration->getDescription();
+
+            if (!empty($description)) {
+                $io->text($description);
+            }
+
             try {
                 $result = $migrator->constructive($migration);
 

@@ -62,6 +62,15 @@ final class RevertCommand
 
         $io->section(sprintf('Reverting migration %s', $version));
 
+        /** @var Migration $migration */
+        $migration = $this->container->get($version);
+
+        $description = $migration->getDescription();
+
+        if (!empty($description)) {
+            $io->text($description);
+        }
+
         $initialCheckpoint = new Checkpoint($checkpoint);
 
         if ($initialCheckpoint->getStep() > 0) {
@@ -69,9 +78,6 @@ final class RevertCommand
                 sprintf('Resuming reverting from checkpoint %d', $initialCheckpoint->getStep()),
             );
         }
-
-        /** @var Migration $migration */
-        $migration = $this->container->get($version);
 
         $formatter = new SchemaChangesFormatter($this->db, $io);
 

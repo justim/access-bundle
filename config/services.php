@@ -15,6 +15,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use Access\AccessBundle\AccessDatabase;
 use Access\AccessBundle\DataCollector\AccessDataCollector;
+use Access\AccessBundle\Migrations\Command\GenerateCommand;
 use Access\AccessBundle\Migrations\Command\InitCommand;
 use Access\AccessBundle\Migrations\Command\RedoCommand;
 use Access\AccessBundle\Migrations\Command\RevertCommand;
@@ -82,6 +83,15 @@ return static function (ContainerConfigurator $container) {
             service('service_container'),
             service(Database::class),
             param('access.migrations.migration_entity_class'),
+        ])
+        ->tag('console.command');
+
+    $container
+        ->services()
+        ->set('access.migrations.generate_command', GenerateCommand::class)
+        ->args([
+            param('access.migrations.migrations_namespace'),
+            param('access.migrations.migrations_path'),
         ])
         ->tag('console.command');
 

@@ -62,14 +62,20 @@ final class RunCommand
 
         $io->section(sprintf('Running migration %s', $version));
 
+        /** @var Migration $migration */
+        $migration = $this->container->get($version);
+
+        $description = $migration->getDescription();
+
+        if (!empty($description)) {
+            $io->text($description);
+        }
+
         $initialCheckpoint = new Checkpoint($checkpoint);
 
         if ($initialCheckpoint->getStep() > 0) {
             $io->note(sprintf('Resuming from checkpoint %d', $initialCheckpoint->getStep()));
         }
-
-        /** @var Migration $migration */
-        $migration = $this->container->get($version);
 
         $formatter = new SchemaChangesFormatter($this->db, $io);
 
