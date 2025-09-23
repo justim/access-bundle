@@ -1,5 +1,38 @@
 {% extends '@WebProfiler/Profiler/layout.html.twig' %}
 
+{% block toolbar %}
+    {% if collector.queries|length > 0 %}
+        {% set icon %}
+            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAcCAYAAAB/E6/TAAABLUlEQVR42u3TP0vDQBiA8UK/gDiLzi0IhU4OEunk5OQUAhGSOBUCzqWfIKSzX8DRySF0URCcMjWLIJjFD9Cpk/D6HITecEPUuzhIAz8CIdyTP/f2iqI4qaqqDx8l5Ic2uIeP/bquezCokOAFF+oCN3t4gPzSEjc4NEPaCldQbzjELTYW0RJzHDchwwem+ons6ZBpLSJ7nueJC22h0V+FzmwWV0ee59vQNV67CGVZJmEYbkNjfpY6X6I0Qo4/3RMmTdDDspuQVsJvgkP3IdMbIkIjLPBoadG2646iKJI0Ta2wxm6OdnP0/Tk6DYJgHcfxpw21RtscDTDDnaVZ26474GkkSRIrrPEv5sgMTfHe+cA2O6wPH6vOBpYQNALneHb96XTEDI6dzpEZ0VzO0Rf3pP5LMLI4tAAAAABJRU5ErkJggg==" alt="" />
+            <span class="sf-toolbar-value">{{ collector.queries|length }}</span>
+            <span class="sf-toolbar-info-piece-additional-detail">
+                <span class="sf-toolbar-label">in</span>
+                <span class="sf-toolbar-value">{{ '%0.2f'|format(collector.duration * 1000) }}</span>
+                <span class="sf-toolbar-label">ms</span>
+            </span>
+        {% endset %}
+
+        {% set text %}
+            <div class="sf-toolbar-info-piece">
+                <b>Database queries</b>
+                <span class="sf-toolbar-status {{ collector.queries|length > 50 ? 'sf-toolbar-status-yellow' : '' }}">{{  collector.queries|length }}</span>
+            </div>
+
+            <div class="sf-toolbar-info-piece">
+                <b>Query time</b>
+                <span>{{ '%0.2f'|format(collector.duration * 1000) }} ms</span>
+            </div>
+
+            <div class="sf-toolbar-info-piece">
+                <b>Query time w/ hydrate</b>
+                <span>{{ '%0.2f'|format(collector.durationWithHydrate * 1000) }} ms</span>
+            </div>
+        {% endset %}
+
+        {{ include('@WebProfiler/Profiler/toolbar_item.html.twig', { link: profiler_url, status: status|default('') }) }}
+    {% endif %}
+{% endblock %}
+
 {% block menu %}
     {# This left-hand menu appears when using the full-screen profiler. #}
     <span class="label{{ collector.queries|length == 0 ? ' disabled' }}">
