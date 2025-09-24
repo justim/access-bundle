@@ -15,8 +15,14 @@ namespace Access\AccessBundle;
 
 use Access\AccessBundle\Exception\InvalidConnectionException;
 use Access\Database;
+use Access\Driver\DriverInterface;
+use Access\EntityProvider;
+use Access\Profiler;
 use Access\Profiler\BlackholeProfiler;
+use Access\Query;
 use Access\Query\Raw;
+use Access\StatementPool;
+use DateTimeImmutable;
 use Exception;
 use Monolog\Attribute\WithMonologChannel;
 use Override;
@@ -35,7 +41,13 @@ use Symfony\Contracts\Service\ResetInterface;
 #[WithMonologChannel('access')]
 class AccessDatabase extends Database implements ResetInterface
 {
+    // we go the lazy route
+    /**
+     * @psalm-suppress PropertyNotSetInConstructor
+     */
     private \PDO $connection;
+
+    private bool $isConnected = false;
 
     public function __construct(
         private string $driver,
@@ -44,19 +56,32 @@ class AccessDatabase extends Database implements ResetInterface
         private string $databaseName,
         private string $username,
         #[SensitiveParameter] private ?string $password,
-        Stopwatch $stopwatch,
+        private Stopwatch $stopwatch,
         private LoggerInterface $logger,
-        ClockInterface $clock,
-        ProfilerMode $profilerMode,
+        private ClockInterface $clock,
+        private ProfilerMode $profilerMode,
     ) {
+        // the parent constructor is not called here because we want to delay the connection
+        // the initialization of the bundle should succeed without a database connection,
+        // like directly after running `composer require access-bundle`
+    }
+
+    private function setup(): void
+    {
+        if ($this->isConnected) {
+            return;
+        }
+
         $this->connection = $this->connect();
 
-        $profiler = match ($profilerMode) {
-            ProfilerMode::Regular => new AccessProfiler($stopwatch, $logger),
+        $profiler = match ($this->profilerMode) {
+            ProfilerMode::Regular => new AccessProfiler($this->stopwatch, $this->logger),
             ProfilerMode::Blackhole => new BlackholeProfiler(),
         };
 
-        parent::__construct($this->connection, $profiler, $clock);
+        parent::__construct($this->connection, $profiler, $this->clock);
+
+        $this->isConnected = true;
     }
 
     private function connect(): \PDO
@@ -73,6 +98,64 @@ class AccessDatabase extends Database implements ResetInterface
         } catch (\Exception $e) {
             throw new InvalidConnectionException('Invalid connection: ' . $e->getMessage(), 0, $e);
         }
+    }
+
+    #[Override]
+    public function getConnection(): \PDO
+    {
+        $this->setup();
+
+        return parent::getConnection();
+    }
+
+    #[Override]
+    public function getStatementPool(): StatementPool
+    {
+        $this->setup();
+
+        return parent::getStatementPool();
+    }
+
+    #[Override]
+    public function getProfiler(): Profiler
+    {
+        $this->setup();
+
+        return parent::getProfiler();
+    }
+
+    #[Override]
+    public function getDriver(): DriverInterface
+    {
+        $this->setup();
+
+        return parent::getDriver();
+    }
+
+    #[Override]
+    public function selectWithEntityProvider(
+        EntityProvider $entityProvider,
+        Query\Select $query,
+    ): \Generator {
+        $this->setup();
+
+        return parent::selectWithEntityProvider($entityProvider, $query);
+    }
+
+    #[Override]
+    public function now(): DateTimeImmutable
+    {
+        $this->setup();
+
+        return parent::now();
+    }
+
+    #[Override]
+    public function withIncludeSoftDeleted(bool $includeSoftDeleted): static
+    {
+        $this->setup();
+
+        return parent::withIncludeSoftDeleted($includeSoftDeleted);
     }
 
     #[Override]
