@@ -46,7 +46,7 @@ final class RunCommand
         OutputInterface $output,
         #[Argument(description: 'Version to migrate to')] string $version,
         #[Option] bool $dryRun = false,
-        #[Option(description: 'Exectute destructive part of migration')] bool $destructive = false,
+        #[Option(description: 'Execute destructive part of migration')] bool $destructive = false,
         #[Option(description: 'Start migration from checkpoint')] int $checkpoint = 0,
     ): int {
         $io = new SymfonyStyle($input, $output);
