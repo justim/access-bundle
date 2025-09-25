@@ -94,7 +94,7 @@ final class RunCommand
                 if ($dryRun) {
                     $io->note('Dry run mode - no changes were applied to the database');
                 } else {
-                    if ($io->confirm('Apply these changes to the database?', false) === false) {
+                    if ($io->confirm('Apply these changes to the database?') === false) {
                         $io->warning('Migration cancelled');
                         return Command::FAILURE;
                     }
