@@ -96,7 +96,7 @@ final class RevertCommand
                 if ($dryRun) {
                     $io->note('Dry run mode - no changes were applied to the database');
                 } else {
-                    if ($io->confirm('Apply these changes to the database?', false) === false) {
+                    if ($io->confirm('Apply these changes to the database?') === false) {
                         $io->warning('Reverting migration cancelled');
                         return Command::FAILURE;
                     }

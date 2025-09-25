@@ -46,7 +46,7 @@ final class RunCommand
         OutputInterface $output,
         #[Argument(description: 'Version to migrate to')] string $version,
         #[Option] bool $dryRun = false,
-        #[Option(description: 'Exectute destructive part of migration')] bool $destructive = false,
+        #[Option(description: 'Execute destructive part of migration')] bool $destructive = false,
         #[Option(description: 'Start migration from checkpoint')] int $checkpoint = 0,
     ): int {
         $io = new SymfonyStyle($input, $output);
@@ -94,7 +94,7 @@ final class RunCommand
                 if ($dryRun) {
                     $io->note('Dry run mode - no changes were applied to the database');
                 } else {
-                    if ($io->confirm('Apply these changes to the database?', false) === false) {
+                    if ($io->confirm('Apply these changes to the database?') === false) {
                         $io->warning('Migration cancelled');
                         return Command::FAILURE;
                     }
