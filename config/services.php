@@ -48,6 +48,7 @@ return static function (ContainerConfigurator $container) {
             service(ClockInterface::class),
             param('access.profiler_mode'),
         ])
+        ->lazy()
         ->public();
 
     $container
