@@ -15,8 +15,9 @@ namespace Access\AccessBundle;
 
 use Access\AccessBundle\Exception\InvalidConnectionException;
 use Access\Database;
+use Access\Exception\ConnectionGoneException;
 use Access\Profiler\BlackholeProfiler;
-use Access\Query\Raw;
+use Access\Query;
 use Exception;
 use Monolog\Attribute\WithMonologChannel;
 use Override;
@@ -79,24 +80,24 @@ class AccessDatabase extends Database implements ResetInterface
     public function reset(): void
     {
         $this->getProfiler()->clear();
-
-        $this->keepAlive();
     }
 
-    private function keepAlive(): void
+    private function reconnect(): void
+    {
+        $connection = $this->connect();
+        $this->setConnection($connection);
+    }
+
+    #[Override]
+    public function executeStatement(Query $query): \Generator
     {
         try {
-            $this->query(new Raw('SELECT 1'));
-        } catch (Exception $e) {
-            if (mb_stripos($e->getMessage(), '2006 MySQL server has gone away') !== false) {
-                $this->logger->info('Connection has gone away, reconnecting..');
+            return parent::executeStatement($query);
+        } catch (ConnectionGoneException) {
+            $this->logger->info('Connection has gone away during query, reconnecting..');
+            $this->reconnect();
 
-                $connection = $this->connect();
-                $this->setConnection($connection);
-                return;
-            }
-
-            throw $e;
+            return $this->executeStatement($query);
         }
     }
 
