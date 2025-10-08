@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use Access\AccessBundle\AccessDatabase;
+use Access\AccessBundle\AccessDatabaseFactory;
 use Access\AccessBundle\DataCollector\AccessDataCollector;
 use Access\AccessBundle\Migrations\Command\GenerateCommand;
 use Access\AccessBundle\Migrations\Command\InitCommand;
@@ -27,6 +28,7 @@ use Access\Database;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\Stopwatch\Stopwatch;
 
 use function Symfony\Component\DependencyInjection\Loader\Configurator\param;
@@ -35,7 +37,7 @@ use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 return static function (ContainerConfigurator $container) {
     $container
         ->services()
-        ->set(Database::class, AccessDatabase::class)
+        ->set(AccessDatabaseFactory::class)
         ->args([
             param('access.connection_driver'),
             param('access.connection_host'),
@@ -48,6 +50,13 @@ return static function (ContainerConfigurator $container) {
             service(ClockInterface::class),
             param('access.profiler_mode'),
         ])
+        ->lazy()
+        ->public();
+
+    $container
+        ->services()
+        ->set(Database::class, AccessDatabase::class)
+        ->factory([new Reference(AccessDatabaseFactory::class), 'create'])
         ->lazy()
         ->public();
 
