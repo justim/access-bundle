@@ -18,6 +18,7 @@ use Access\Database;
 use Access\Exception\ConnectionGoneException;
 use Access\Profiler\BlackholeProfiler;
 use Access\Query;
+use Access\Transaction;
 use Exception;
 use Monolog\Attribute\WithMonologChannel;
 use Override;
@@ -86,6 +87,21 @@ class AccessDatabase extends Database implements ResetInterface
     {
         $connection = $this->connect();
         $this->setConnection($connection);
+    }
+
+    #[Override]
+    public function beginTransaction(): Transaction
+    {
+        try {
+            return parent::beginTransaction();
+        } catch (ConnectionGoneException) {
+            $this->logger->info(
+                'Connection has gone away when beginning transaction, reconnecting..',
+            );
+            $this->reconnect();
+
+            return $this->beginTransaction();
+        }
     }
 
     #[Override]
