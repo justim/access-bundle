@@ -108,7 +108,11 @@ class AccessDatabase extends Database implements ResetInterface
     public function executeStatement(Query $query): \Generator
     {
         try {
-            return parent::executeStatement($query);
+            $generator = parent::executeStatement($query);
+
+            yield from $generator;
+
+            return $generator->getReturn();
         } catch (ConnectionGoneException) {
             $this->logger->info('Connection has gone away during query, reconnecting..');
             $this->reconnect();
