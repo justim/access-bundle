@@ -92,6 +92,7 @@ return static function (ContainerConfigurator $container) {
         ->args([
             service('service_container'),
             service(Database::class),
+            param('access.migrations.migrations_namespace'),
             param('access.migrations.migration_entity_class'),
         ])
         ->tag('console.command');
@@ -123,6 +124,7 @@ return static function (ContainerConfigurator $container) {
         ->args([
             service('service_container'),
             service(Database::class),
+            param('access.migrations.migrations_namespace'),
             param('access.migrations.migration_entity_class'),
         ])
         ->tag('console.command');
@@ -133,6 +135,7 @@ return static function (ContainerConfigurator $container) {
         ->args([
             service('service_container'),
             service(Database::class),
+            param('access.migrations.migrations_namespace'),
             param('access.migrations.migration_entity_class'),
         ])
         ->tag('console.command');

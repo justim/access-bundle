@@ -38,6 +38,7 @@ final class RunCommand
     public function __construct(
         private ContainerInterface $container,
         private Database $db,
+        private string $migrationsNamespace,
         private string $migrationEntity,
     ) {}
 
@@ -52,8 +53,18 @@ final class RunCommand
         $io = new SymfonyStyle($input, $output);
 
         if (!is_subclass_of($version, Migration::class)) {
-            $io->error(sprintf('Class %s not found or is not a valid migration', $version));
-            return Command::FAILURE;
+            $versionWithNamespace = $migration = sprintf(
+                '%s\\%s',
+                $this->migrationsNamespace,
+                $version,
+            );
+
+            if (is_subclass_of($versionWithNamespace, Migration::class)) {
+                $version = $versionWithNamespace;
+            } else {
+                $io->error(sprintf('Class %s not found or is not a valid migration', $version));
+                return Command::FAILURE;
+            }
         }
 
         $migrator = new Migrator($this->db, $this->migrationEntity);

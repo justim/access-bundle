@@ -32,6 +32,7 @@ final class RedoCommand
     public function __construct(
         private ContainerInterface $container,
         private Database $db,
+        private string $migrationsNamespace,
         private string $migrationEntity,
     ) {}
 
@@ -42,14 +43,26 @@ final class RedoCommand
         #[Option] bool $dryRun = false,
         #[Option(description: 'Exectute destructive part of migration')] bool $destructive = false,
     ): int {
-        $revert = new RevertCommand($this->container, $this->db, $this->migrationEntity);
+        $revert = new RevertCommand(
+            $this->container,
+            $this->db,
+            $this->migrationsNamespace,
+            $this->migrationEntity,
+        );
+
         $code = $revert($input, $output, $version, $dryRun, $destructive);
 
         if ($code !== Command::SUCCESS) {
             return $code;
         }
 
-        $run = new RunCommand($this->container, $this->db, $this->migrationEntity);
+        $run = new RunCommand(
+            $this->container,
+            $this->db,
+            $this->migrationsNamespace,
+            $this->migrationEntity,
+        );
+
         return $run($input, $output, $version, $dryRun, $destructive);
     }
 }
