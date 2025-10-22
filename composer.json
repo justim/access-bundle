@@ -19,6 +19,7 @@
         "twig/twig": "^3.21"
     },
     "require-dev": {
+        "psalm/plugin-symfony": "^5.2",
         "symfony/web-profiler-bundle": "^7.3",
         "vimeo/psalm": "^6.13"
     },

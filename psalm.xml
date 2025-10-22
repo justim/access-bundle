@@ -14,4 +14,13 @@
             <directory name="vendor" />
         </ignoreFiles>
     </projectFiles>
+
+    <issueHandlers>
+        <!-- we do this on purpose, we load public migrations directly from container -->
+        <PluginIssue name="ContainerDependency" errorLevel="suppress"/>
+    </issueHandlers>
+
+    <plugins>
+        <pluginClass class="Psalm\SymfonyPsalmPlugin\Plugin"/>
+    </plugins>
 </psalm>
