@@ -16,6 +16,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 use Access\AccessBundle\AccessDatabase;
 use Access\AccessBundle\AccessDatabaseFactory;
 use Access\AccessBundle\DataCollector\AccessDataCollector;
+use Access\AccessBundle\Form\Type\EntityType;
 use Access\AccessBundle\Migrations\Command\GenerateCommand;
 use Access\AccessBundle\Migrations\Command\InitCommand;
 use Access\AccessBundle\Migrations\Command\RedoCommand;
@@ -79,6 +80,12 @@ return static function (ContainerConfigurator $container) {
         ->set('access.value_resolver.access_value_resolver', AccessValueResolver::class)
         ->args([service(Database::class)])
         ->tag('controller.argument_value_resolver', ['priority' => 101]);
+
+    $container
+        ->services()
+        ->set('access.form_type.access_entity_type', EntityType::class)
+        ->args([service(Database::class)])
+        ->tag('form.type');
 
     $container
         ->services()
