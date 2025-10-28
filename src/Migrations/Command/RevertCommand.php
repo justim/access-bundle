@@ -71,20 +71,22 @@ final class RevertCommand
         $migrator->init();
         $migrator->setDryRun(true);
 
-        $io->section(sprintf('Reverting migration %s', $version));
+        if ($io->isVerbose()) {
+            $io->section(sprintf('Reverting migration %s', $version));
+        }
 
         /** @var Migration $migration */
         $migration = $this->container->get($version);
 
         $description = $migration->getDescription();
 
-        if (!empty($description)) {
+        if (!empty($description) && $io->isVerbose()) {
             $io->text($description);
         }
 
         $initialCheckpoint = new Checkpoint($checkpoint);
 
-        if ($initialCheckpoint->getStep() > 0) {
+        if ($initialCheckpoint->getStep() > 0 && $io->isVerbose()) {
             $io->note(
                 sprintf('Resuming reverting from checkpoint %d', $initialCheckpoint->getStep()),
             );
