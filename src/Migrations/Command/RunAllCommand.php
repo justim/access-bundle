@@ -115,14 +115,16 @@ final class RunAllCommand
         $formatter = new SchemaChangesFormatter($this->db, $io);
 
         foreach ($migrations as $version) {
-            $io->section(sprintf('Running migration %s', $version));
+            if ($io->isVerbose()) {
+                $io->section(sprintf('Running migration %s', $version));
+            }
 
             /** @var Migration $migration */
             $migration = $this->container->get($version);
 
             $description = $migration->getDescription();
 
-            if (!empty($description)) {
+            if (!empty($description) && $io->isVerbose()) {
                 $io->text($description);
             }
 

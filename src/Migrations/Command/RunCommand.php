@@ -71,20 +71,22 @@ final class RunCommand
         $migrator->init();
         $migrator->setDryRun(true);
 
-        $io->section(sprintf('Running migration %s', $version));
+        if ($io->isVerbose()) {
+            $io->section(sprintf('Running migration %s', $version));
+        }
 
         /** @var Migration $migration */
         $migration = $this->container->get($version);
 
         $description = $migration->getDescription();
 
-        if (!empty($description)) {
+        if (!empty($description) && $io->isVerbose()) {
             $io->text($description);
         }
 
         $initialCheckpoint = new Checkpoint($checkpoint);
 
-        if ($initialCheckpoint->getStep() > 0) {
+        if ($initialCheckpoint->getStep() > 0 && $io->isVerbose()) {
             $io->note(sprintf('Resuming from checkpoint %d', $initialCheckpoint->getStep()));
         }
 
