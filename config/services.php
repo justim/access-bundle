@@ -63,12 +63,13 @@ return static function (ContainerConfigurator $container) {
 
     $container
         ->services()
-        ->set('access.access_data_collector', AccessDataCollector::class)
+        ->set(AccessDataCollector::class)
         ->args([service(Database::class)])
         ->tag('data_collector', [
             'template' => '@Access/access-data-collector.html.twig',
             'id' => 'access',
-        ]);
+        ])
+        ->alias('access.access_data_collector', AccessDataCollector::class);
 
     $container
         ->services()
@@ -77,45 +78,50 @@ return static function (ContainerConfigurator $container) {
 
     $container
         ->services()
-        ->set('access.value_resolver.access_value_resolver', AccessValueResolver::class)
+        ->set(AccessValueResolver::class)
         ->args([service(Database::class)])
-        ->tag('controller.argument_value_resolver', ['priority' => 101]);
+        ->tag('controller.argument_value_resolver', ['priority' => 101])
+        ->alias('access.value_resolver.access_value_resolver', AccessValueResolver::class);
 
     $container
         ->services()
-        ->set('access.form_type.access_entity_type', EntityType::class)
+        ->set(EntityType::class)
         ->args([service(Database::class)])
-        ->tag('form.type');
+        ->tag('form.type')
+        ->alias('access.form_type.access_entity_type', EntityType::class);
 
     $container
         ->services()
-        ->set('access.migrations.init_command', InitCommand::class)
+        ->set(InitCommand::class)
         ->args([service(Database::class), param('access.migrations.migration_entity_class')])
-        ->tag('console.command');
+        ->tag('console.command')
+        ->set('access.migrations.init_command', InitCommand::class);
 
     $container
         ->services()
-        ->set('access.migrations.run_command', RunCommand::class)
+        ->set(RunCommand::class)
         ->args([
             service('service_container'),
             service(Database::class),
             param('access.migrations.migrations_namespace'),
             param('access.migrations.migration_entity_class'),
         ])
-        ->tag('console.command');
+        ->tag('console.command')
+        ->set('access.migrations.run_command', RunCommand::class);
 
     $container
         ->services()
-        ->set('access.migrations.generate_command', GenerateCommand::class)
+        ->set(GenerateCommand::class)
         ->args([
             param('access.migrations.migrations_namespace'),
             param('access.migrations.migrations_path'),
         ])
-        ->tag('console.command');
+        ->tag('console.command')
+        ->set('access.migrations.generate_command', GenerateCommand::class);
 
     $container
         ->services()
-        ->set('access.migrations.run_all_command', RunAllCommand::class)
+        ->set(RunAllCommand::class)
         ->args([
             service('service_container'),
             service(Database::class),
@@ -123,27 +129,30 @@ return static function (ContainerConfigurator $container) {
             param('access.migrations.migrations_path'),
             param('access.migrations.migration_entity_class'),
         ])
-        ->tag('console.command');
+        ->tag('console.command')
+        ->set('access.migrations.run_all_command', RunAllCommand::class);
 
     $container
         ->services()
-        ->set('access.migrations.revert_command', RevertCommand::class)
+        ->set(RevertCommand::class)
         ->args([
             service('service_container'),
             service(Database::class),
             param('access.migrations.migrations_namespace'),
             param('access.migrations.migration_entity_class'),
         ])
-        ->tag('console.command');
+        ->tag('console.command')
+        ->set('access.migrations.revert_command', RevertCommand::class);
 
     $container
         ->services()
-        ->set('access.migrations.redo_command', RedoCommand::class)
+        ->set(RedoCommand::class)
         ->args([
             service('service_container'),
             service(Database::class),
             param('access.migrations.migrations_namespace'),
             param('access.migrations.migration_entity_class'),
         ])
-        ->tag('console.command');
+        ->tag('console.command')
+        ->set('access.migrations.redo_command', RedoCommand::class);
 };
