@@ -24,6 +24,7 @@ use Access\AccessBundle\Migrations\Command\RevertCommand;
 use Access\AccessBundle\Migrations\Command\RunAllCommand;
 use Access\AccessBundle\Migrations\Command\RunCommand;
 use Access\AccessBundle\Twig\AccessExtension as TwigAccessExtension;
+use Access\AccessBundle\ValueResolver\AccessCursorValueResolver;
 use Access\AccessBundle\ValueResolver\AccessValueResolver;
 use Access\Database;
 use Psr\Log\LoggerInterface;
@@ -82,6 +83,15 @@ return static function (ContainerConfigurator $container) {
         ->args([service(Database::class)])
         ->tag('controller.argument_value_resolver', ['priority' => 101])
         ->alias('access.value_resolver.access_value_resolver', AccessValueResolver::class);
+
+    $container
+        ->services()
+        ->set(AccessCursorValueResolver::class)
+        ->tag('controller.argument_value_resolver', ['priority' => 101])
+        ->alias(
+            'access.value_resolver.access_cursor_value_resolver',
+            AccessCursorValueResolver::class,
+        );
 
     $container
         ->services()
