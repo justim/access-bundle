@@ -83,7 +83,17 @@ final readonly class AccessValueResolver implements ValueResolverInterface
         };
 
         if ($request->attributes->has($attributeName)) {
+            /** @var mixed $value */
             $value = $request->attributes->get($attributeName);
+
+            /** @var array<string, string> $routeMapping */
+            $routeMapping = $request->attributes->get('_route_mapping') ?? [];
+
+            foreach ($routeMapping as $routeMappingParameterName => $routeMappingAttributeName) {
+                if ($attributeName === $routeMappingAttributeName) {
+                    return [$routeMappingParameterName => $value];
+                }
+            }
 
             if (is_array($value)) {
                 return $value;
