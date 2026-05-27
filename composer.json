@@ -6,7 +6,7 @@
     "require": {
         "php": "^8.4",
         "doctrine/sql-formatter": "^1.5",
-        "justim/access": "dev-schema-what",
+        "justim/access": "^1.23",
         "monolog/monolog": "^1.25.1 || ^2.0 || ^3.0",
         "psr/log": "^3.0",
         "symfony/clock": "^7.3 || ^8.0",
